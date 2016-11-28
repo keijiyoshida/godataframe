@@ -5,6 +5,6 @@ type Type int
 
 // Types of a data frame element.
 const (
-	Float64 Type = iota
-	String
+	String Type = iota
+	Float64
 )
