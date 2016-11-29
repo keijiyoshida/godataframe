@@ -1,39 +1,84 @@
 package dataframe
 
 import (
-	"fmt"
 	"reflect"
 	"testing"
 )
 
-func Test_newItemNames(t *testing.T) {
-	testCases := [][]string{
-		{},
-		{"0"},
-		{"0", "1"},
-		{"0", "1", "2"},
-		{"0", "1", "2", "3"},
+func Test_getSrcItemNames(t *testing.T) {
+	testCases := []struct {
+		data             [][]string
+		config           Config
+		wantSrcItemNames []string
+		wantErr          error
+	}{
+		{
+			[][]string{},
+			Config{nil, nil, true},
+			nil,
+			ErrNoItemNames,
+		},
+		{
+			[][]string{{"0"}},
+			Config{nil, nil, true},
+			[]string{"0"},
+			nil,
+		},
+		{
+			[][]string{},
+			Config{[]string{"0"}, nil, false},
+			[]string{"0"},
+			nil,
+		},
 	}
 
 	for _, tc := range testCases {
-		got := newItemNames(tc)
+		gotSrcItemNames, gotErr := getSrcItemNames(tc.data, tc.config)
 
-		if !reflect.DeepEqual(got, tc) {
-			t.Errorf("newItemNames(%v) => %v; want %v", tc, got, tc)
+		if !reflect.DeepEqual(gotSrcItemNames, tc.wantSrcItemNames) || gotErr != tc.wantErr {
+			t.Errorf("getSrcItemNames(%v, %v) => %v, %#v; want %v, %#v",
+				tc.data, tc.config, gotSrcItemNames, gotErr, tc.wantSrcItemNames, tc.wantErr)
 		}
+	}
+}
 
-		if fmt.Sprintf("%p", got) == fmt.Sprintf("%p", tc) && len(got) > 0 {
-			t.Errorf("newItemNames should return a new slice")
+func Test_newItemNames(t *testing.T) {
+	testCases := []struct {
+		data          [][]string
+		config        Config
+		wantItemNames []string
+		wantErr       error
+	}{
+		{
+			[][]string{},
+			Config{nil, nil, true},
+			nil,
+			ErrNoItemNames,
+		},
+		{
+			[][]string{{"0"}},
+			Config{nil, nil, true},
+			[]string{"0"},
+			nil,
+		},
+	}
+
+	for _, tc := range testCases {
+		gotItemNames, gotErr := newItemNames(tc.data, tc.config)
+
+		if !reflect.DeepEqual(gotItemNames, tc.wantItemNames) || gotErr != tc.wantErr {
+			t.Errorf("newItemNames(%v, %v) => %v, %#v; want %v, %#v",
+				tc.data, tc.config, gotItemNames, gotErr, tc.wantItemNames, tc.wantErr)
 		}
 	}
 }
 
 func Test_newTypes(t *testing.T) {
 	testCases := []struct {
-		srcItemNames []string
-		srcTypes     []Type
-		wantTypes    map[string]Type
-		wantErr      error
+		itemNames []string
+		srcTypes  []Type
+		wantTypes map[string]Type
+		wantErr   error
 	}{
 		{
 			[]string{"0"},
@@ -62,11 +107,11 @@ func Test_newTypes(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		gotTypes, gotErr := newTypes(tc.srcItemNames, tc.srcTypes)
+		gotTypes, gotErr := newTypes(tc.itemNames, tc.srcTypes)
 
 		if !reflect.DeepEqual(gotTypes, tc.wantTypes) || gotErr != tc.wantErr {
 			t.Errorf("newTypes(%v, %v) => %v, %#v; want %v, %#v",
-				tc.srcItemNames, tc.srcTypes, gotTypes, gotErr, tc.wantTypes, tc.wantErr)
+				tc.itemNames, tc.srcTypes, gotTypes, gotErr, tc.wantTypes, tc.wantErr)
 		}
 	}
 }

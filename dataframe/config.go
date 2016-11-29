@@ -6,6 +6,6 @@ type Config struct {
 	ItemNames []string
 	// Types represents types of data frame columns.
 	Types []Type
-	// The first row is used as a header when UseFirstRowAsHeader is set to true.
-	UseFirstRowAsHeader bool
+	// The first row is used as item names when UseFirstRowAsHeader is set to true.
+	UseFirstRowAsItemNames bool
 }
