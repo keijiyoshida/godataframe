@@ -16,7 +16,7 @@ func Test_getSrcItemNames(t *testing.T) {
 			[][]string{},
 			Config{nil, nil, true},
 			nil,
-			ErrNoItemNames,
+			ErrNoData,
 		},
 		{
 			[][]string{{"0"}},
@@ -53,7 +53,7 @@ func Test_newItemNames(t *testing.T) {
 			[][]string{},
 			Config{nil, nil, true},
 			nil,
-			ErrNoItemNames,
+			ErrNoData,
 		},
 		{
 			[][]string{{"0"}},
@@ -84,7 +84,7 @@ func Test_newTypes(t *testing.T) {
 			[]string{"0"},
 			[]Type{String, Float64},
 			nil,
-			ErrInvalidTypesLength,
+			ErrInvalidTypesLen,
 		},
 		{
 			[]string{"0"},
