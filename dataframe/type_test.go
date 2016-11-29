@@ -9,7 +9,7 @@ func TestType_valid(t *testing.T) {
 	}{
 		{String, true},
 		{Float64, true},
-		{Type(2), false},
+		{Type(-1), false},
 	}
 
 	for _, tc := range testCases {

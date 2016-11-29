@@ -7,6 +7,7 @@ func TestSetNumConcurrency(t *testing.T) {
 
 	for _, n := range ns {
 		SetNumConcurrency(n)
+
 		if numConcurrency != n {
 			t.Errorf("numConcurrency => %d, want %d", numConcurrency, n)
 		}
