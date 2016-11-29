@@ -3,6 +3,7 @@ package dataframe
 import (
 	"errors"
 	"strconv"
+	"sync"
 )
 
 // Errors
@@ -138,25 +139,70 @@ func newCols(itemNames []string, config Config, data [][]string) (map[string][]s
 func newStringCol(colIdx int, recNum int, data [][]string) []string {
 	stringCol := make([]string, recNum)
 
-	for i := 0; i < recNum; i++ {
-		stringCol[i] = data[i][colIdx]
+	wg := new(sync.WaitGroup)
+	wg.Add(numConcurrency)
+
+	for i := 0; i < numConcurrency; i++ {
+		from := recNum / numConcurrency * i
+		to := recNum / numConcurrency * (i + 1)
+
+		go fetchString(data, stringCol, colIdx, from, to, wg)
 	}
 
+	wg.Wait()
+
 	return stringCol
+}
+
+// fetchString reads data and sets up string column data.
+func fetchString(data [][]string, stringCol []string, colIdx int, from int, to int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for i := from; i < to; i++ {
+		stringCol[i] = data[i][colIdx]
+	}
 }
 
 // newFloatCol creates and returns float64 column data.
 func newFloat64Col(colIdx int, recNum int, data [][]string) ([]float64, error) {
 	float64Col := make([]float64, recNum)
 
-	for i := 0; i < recNum; i++ {
+	ch := make(chan error, numConcurrency)
+
+	for i := 0; i < numConcurrency; i++ {
+		from := recNum / numConcurrency * i
+		to := recNum / numConcurrency * (i + 1)
+
+		go fetchFloat64(data, float64Col, colIdx, from, to, ch)
+	}
+
+	errs := make([]error, 0, numConcurrency)
+
+	for i := 0; i < numConcurrency; i++ {
+		err := <-ch
+		if err != nil {
+			errs = append(errs, err)
+		}
+	}
+
+	if len(errs) > 0 {
+		return nil, &MultiError{",", errs}
+	}
+
+	return float64Col, nil
+}
+
+// fetchFloat64 reads data and sets up float64 column data.
+func fetchFloat64(data [][]string, float64Col []float64, colIdx int, from int, to int, ch chan<- error) {
+	for i := from; i < to; i++ {
 		f, err := strconv.ParseFloat(data[i][colIdx], 64)
 		if err != nil {
-			return nil, err
+			ch <- err
+			return
 		}
 
 		float64Col[i] = f
 	}
 
-	return float64Col, nil
+	ch <- nil
 }
