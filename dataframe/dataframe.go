@@ -2,6 +2,7 @@ package dataframe
 
 import (
 	"errors"
+	"math"
 	"strconv"
 	"sync"
 )
@@ -142,9 +143,11 @@ func newStringCol(colIdx int, recNum int, data [][]string) []string {
 	wg := new(sync.WaitGroup)
 	wg.Add(numConcurrency)
 
+	d := (recNum + numConcurrency - 1) / numConcurrency
+
 	for i := 0; i < numConcurrency; i++ {
-		from := recNum / numConcurrency * i
-		to := recNum / numConcurrency * (i + 1)
+		from := d * i
+		to := int(math.Min(float64(d*(i+1)), float64(recNum)))
 
 		go fetchString(data, stringCol, colIdx, from, to, wg)
 	}
@@ -169,9 +172,11 @@ func newFloat64Col(colIdx int, recNum int, data [][]string) ([]float64, error) {
 
 	ch := make(chan error, numConcurrency)
 
+	d := (recNum + numConcurrency - 1) / numConcurrency
+
 	for i := 0; i < numConcurrency; i++ {
-		from := recNum / numConcurrency * i
-		to := recNum / numConcurrency * (i + 1)
+		from := d * i
+		to := int(math.Min(float64(d*(i+1)), float64(recNum)))
 
 		go fetchFloat64(data, float64Col, colIdx, from, to, ch)
 	}
@@ -195,6 +200,11 @@ func newFloat64Col(colIdx int, recNum int, data [][]string) ([]float64, error) {
 // fetchFloat64 reads data and sets up float64 column data.
 func fetchFloat64(data [][]string, float64Col []float64, colIdx int, from int, to int, ch chan<- error) {
 	for i := from; i < to; i++ {
+		if data[i][colIdx] == "" {
+			float64Col[i] = math.NaN()
+			continue
+		}
+
 		f, err := strconv.ParseFloat(data[i][colIdx], 64)
 		if err != nil {
 			ch <- err
