@@ -159,7 +159,7 @@ func newStringCol(colIdx int, recNum int, data [][]string) []string {
 
 	for i := 0; i < numConcurrency; i++ {
 		from := d * i
-		to := int(math.Min(float64(d*(i+1)), float64(recNum)))
+		to := min(d*(i+1), recNum)
 
 		go fetchString(data, stringCol, colIdx, from, to, wg)
 	}
@@ -188,7 +188,7 @@ func newFloat64Col(colIdx int, recNum int, data [][]string) ([]float64, error) {
 
 	for i := 0; i < numConcurrency; i++ {
 		from := d * i
-		to := int(math.Min(float64(d*(i+1)), float64(recNum)))
+		to := min(d*(i+1), recNum)
 
 		go fetchFloat64(data, float64Col, colIdx, from, to, ch)
 	}
