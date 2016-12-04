@@ -12,7 +12,7 @@ func (e *MultiError) Error() string {
 	bf := bytes.NewBufferString("")
 
 	for i, err := range e.Errors {
-		if i > 1 {
+		if i > 0 {
 			bf.WriteString(e.Sep)
 		}
 
