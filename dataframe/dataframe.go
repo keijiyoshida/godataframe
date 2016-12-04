@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"strconv"
+	"sync"
 )
 
 // Errors
@@ -132,6 +133,55 @@ func (df *DataFrame) AppendFloat64ColFromStringCol(itemName, srcItemName string,
 	df.bd.float64Cols[itemName] = float64Col
 
 	return nil
+}
+
+// Float64Values creates and returns float64 2d slice.
+func (df *DataFrame) Float64Values(itemNames []string) ([][]float64, error) {
+	n := df.RowNum()
+
+	v := make([][]float64, n)
+
+	cn := len(itemNames)
+
+	float64Cols := make([][]float64, cn)
+
+	for i, itemName := range itemNames {
+		float64Col, exist := df.bd.float64Cols[itemName]
+		if !exist {
+			return nil, ErrItemNameNotExist
+		}
+
+		float64Cols[i] = float64Col
+	}
+
+	wg := new(sync.WaitGroup)
+	wg.Add(numConcurrency)
+
+	d := divUp(n, numConcurrency)
+
+	for i := 0; i < numConcurrency; i++ {
+		from := df.fromRowIdx + d*i
+		to := df.fromRowIdx + min(d*(i+1), n)
+
+		go setFloat64Values(v, float64Cols, cn, from, to, wg)
+	}
+
+	wg.Wait()
+
+	return v, nil
+}
+
+// setFloat64Values sets float64 values to v.
+func setFloat64Values(v, float64Cols [][]float64, cn int, from, to int, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	for i := from; i < to; i++ {
+		v[i] = make([]float64, cn)
+
+		for j := 0; j < cn; j++ {
+			v[i][j] = float64Cols[j][i]
+		}
+	}
 }
 
 // setFloat64FromString creates a float64 data from a string data and
