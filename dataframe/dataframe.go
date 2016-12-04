@@ -135,6 +135,16 @@ func (df *DataFrame) AppendFloat64ColFromStringCol(itemName, srcItemName string,
 	return nil
 }
 
+// Float64Col returns a float64 column.
+func (df *DataFrame) Float64Col(itemName string) ([]float64, error) {
+	float64Col, exist := df.bd.float64Cols[itemName]
+	if !exist {
+		return nil, ErrItemNameNotExist
+	}
+
+	return float64Col, nil
+}
+
 // Float64Values creates and returns float64 2d slice.
 func (df *DataFrame) Float64Values(itemNames []string) ([][]float64, error) {
 	n := df.RowNum()
